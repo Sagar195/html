@@ -1,0 +1,72 @@
+Jenkinsfile 
+
+pipeline {
+    agent any
+
+    triggers {
+        pollSCM('H/5 * * * *')
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Verify Files') {
+            steps {
+                bat 'git --version'
+                bat 'docker --version'
+                bat 'dir'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                bat 'docker build -t ecommerce-app .'
+            }
+        }
+
+        stage('Deploy Web Application') {
+            steps {
+                bat 'docker rm -f ecommerce-container 2>NUL || exit /b 0'
+                bat 'docker run -d --name ecommerce-container -p 8080:80 ecommerce-app'
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                bat 'docker ps'
+                bat 'curl.exe -f http://localhost:8080/'
+                bat 'curl.exe -f http://localhost:8080/products.html'
+            }
+        }
+    }
+}
+Dockerfile 
+
+FROM nginx:alpine
+COPY . /usr/share/nginx/html
+EXPOSE 80
+
+
+<html>
+<body>
+  <h1>Welcome to ShopEasy</h1>
+  <p>Online Shopping Website</p>
+  <a href="products.html">View Products</a>
+</body>
+</html>
+
+
+<html>
+<body>
+  <h1>Our Products</h1>
+  <p>Mobile - Rs. 10000</p>
+  <p>Headphones - Rs. 999</p>
+  <a href="index.html">Home</a>
+</body>
+</html>
+
+
